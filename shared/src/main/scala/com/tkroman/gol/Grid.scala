@@ -38,6 +38,11 @@ class Grid(
 
   def iterator: Iterator[Row] = rows.iterator
 
+  def crossIterator: Iterator[(Int, Int, Boolean)] =
+    iterator.zipWithIndex.flatMap { case (r, y) =>
+      r.iterator.zipWithIndex.map { case (a, x) => (x, y, a) }
+    }
+
   def use(liveCoordinates: Set[(Int, Int)]): Grid =
     new Grid(
       Array.tabulate(h) { y =>

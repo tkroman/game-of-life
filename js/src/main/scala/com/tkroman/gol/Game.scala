@@ -6,49 +6,74 @@ import monix.eval.*
 import monix.reactive.*
 import org.scalajs.dom
 import org.scalajs.dom.CanvasRenderingContext2D
+import org.scalajs.dom.html.Canvas
 import scala.concurrent.duration.*
 import scala.util.Right
 import scala.util.chaining.*
 
 object Game extends TaskApp:
-  private def setupCanvas(canvas: dom.html.Canvas): dom.CanvasRenderingContext2D =
-    canvas.height = dom.document.documentElement.clientWidth.min(dom.document.documentElement.clientHeight)
-    canvas.width = dom.document.documentElement.clientWidth.min(dom.document.documentElement.clientHeight)
-    val ctx = canvas.getContext("2d").asInstanceOf[dom.CanvasRenderingContext2D]
-    ctx
+  private val bg = "lightskyblue"
+  private val fg = "yellow"
+
+  override def run(args: List[String]): Task[ExitCode] =
+    for
+      args  <- parseArgs
+      w     <- Task(args.getOrElse("w", "21").toInt)
+      h     <- Task(args.getOrElse("h", "21").toInt)
+      fps   <- Task(args.getOrElse("fps", "8").toInt)
+      shape <- Task(Shape.fromRle(args.getOrElse("shape", "bo$2bo$3o!")))
+      _     <- Task(dom.window.onresize = _ => canvas.fitDimensions)
+      _     <- fitCanvas
+      game  = new Life(w, h, shape)
+      _     <- game
+        .launchWithRendering(fps, 1024)(draw(h))
+        .timeoutTo(1.minute, Task.unit)
+    yield
+      ExitCode.Success
 
   private def draw(h: Int): Grid => Task[Unit] = grid => Task {
-    val canvas = dom.document.getElementById("grid").asInstanceOf[dom.html.Canvas]
-    val ctx = setupCanvas(canvas)
-    val pxDim = canvas.height.toDouble / h
-    ctx.fillStyle = "lightskyblue"
-    ctx.fillRect(0, 0, canvas.height, canvas.width)
+    val cv = canvas.fitDimensions
+    val pxDim = cv.height.toDouble / h
+    val ctx = cv.ctx2d
+    ctx.fillStyle = bg
+    ctx.fillRect(0, 0, cv.height, cv.width)
     dom.window.requestAnimationFrame { _ =>
-      grid.iterator.zipWithIndex.foreach { case (r, y) =>
-        r.iterator.zipWithIndex.foreach { case (alive, x) =>
-          ctx.fillStyle = if alive then "yellow" else "lightskyblue"
-          ctx.fillRect(x * pxDim, y * pxDim, pxDim, pxDim)
-        }
+      grid.crossIterator.foreach { case (x, y, alive) =>
+        ctx.fillStyle = alive.color
+        ctx.fillRect(x * pxDim, y * pxDim, pxDim, pxDim)
       }
     }
   }
 
-  override def run(args: List[String]): Task[ExitCode] =
-    val args = dom.document.location.search.stripPrefix("?")
+  private def canvas: Canvas =
+    dom.document.getElementById("grid").asInstanceOf[Canvas]
+
+  extension (b: Boolean)
+    private def color: String = if b then fg else bg
+
+  extension (c: Canvas)
+    private def ctx2d: CanvasRenderingContext2D =
+      c.getContext("2d").asInstanceOf[CanvasRenderingContext2D]
+    private def fitDimensions: Canvas =
+      val minDim = math.min(
+        dom.document.documentElement.clientHeight,
+        dom.document.documentElement.clientWidth,
+      )
+      c.height = minDim
+      c.width = minDim
+      c
+
+  private val fitCanvas: Task[Unit] = Task {
+    canvas
+      .fitDimensions
+      .ctx2d
+      .scale(dom.window.devicePixelRatio, dom.window.devicePixelRatio)
+  }
+
+  private val parseArgs: Task[Map[String, String]] = Task {
+    dom.document.location.search.stripPrefix("?")
       .split('&')
       .filterNot(_.isBlank)
       .map(_.split('=').pipe(xs => xs(0) -> xs(1)))
       .toMap
-    val w = args.getOrElse("w", "21").toInt
-    val h = args.getOrElse("h", "21").toInt
-    val fps = args.getOrElse("fps", "8").toInt
-    val shape = ShapeReader.fromRle(args.getOrElse("shape", "bo$2bo$3o!"))
-    Task {
-      val canvas = dom.document.getElementById("grid").asInstanceOf[dom.html.Canvas]
-      setupCanvas(canvas)//.scale(dom.window.devicePixelRatio, dom.window.devicePixelRatio)
-      dom.window.onresize = { _ => setupCanvas(canvas) }
-    } *> new Life(w, h)
-      .launchWithRendering(shape)(fps, 1024)(draw(h))
-      .timeoutTo(1.minute, Task.unit)
-      *> Task(ExitCode.Success)
-
+  }

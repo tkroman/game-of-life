@@ -4,11 +4,13 @@ import scala.collection.mutable
 import scala.util.chaining.*
 
 // https://conwaylife.com/wiki/Run_Length_Encoded
-object ShapeReader:
+object RleDecoder:
   private val rleRegex = """\d+[bo$]""".r
 
-  def fromRle(rle: String): Shape =
-    val points = rleRegex
+class RleDecoder(rle: String):
+  def shape(): Shape =
+    val points = RleDecoder
+      .rleRegex
       .replaceAllIn(
         rle.stripSuffix("!"), m => {
           val char = m.matched.last
@@ -24,8 +26,11 @@ object ShapeReader:
       .toSet
 
     val (pw, ph) = points.reduce((x, y) => (x._1.max(y._1), x._2.max(y._2)))
-    (w: Int, h: Int) => {
-      val cx = (w - pw) / 2
-      val cy = (h - ph) / 2
-      points.map { case (x, y) => (x + cx, y + cy) }
-    }
+    new Shape:
+      override def get(w: Int, h: Int): Set[(Int, Int)] =
+        val cx = (w - pw) / 2
+        val cy = (h - ph) / 2
+        points.map { case (x, y) => (x + cx, y + cy) }
+
+      override def toString: String = rle
+      

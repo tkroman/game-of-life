@@ -7,8 +7,8 @@ import scala.annotation.{tailrec, targetName}
 import scala.collection.BitSet
 import scala.concurrent.duration.*
 
-class Life(w: Int, h: Int):
-  def launchPure(shape: Shape): Observable[Grid] =
+class Life(w: Int, h: Int, shape: Shape):
+  def launchPure(): Observable[Grid] =
     Observable.fromIterator(
       Task(
         Iterator
@@ -17,8 +17,7 @@ class Life(w: Int, h: Int):
       )
     )
 
-  def launchWithRendering(shape: Shape)
-                         (fps: Int, maxGeneraions: Long)
+  def launchWithRendering(fps: Int, maxGeneraions: Long)
                          (draw: Grid => Task[Unit]): Task[Unit] =
     val delay = (1.0 / fps).seconds
     Task

@@ -8,6 +8,9 @@ object Shape:
     "glider" -> Glider,
     "blinker" -> Blinker,
   )
+  
+  def fromRle(rle: String): Shape =
+    RleDecoder(rle).shape()
 
   val Glider: Shape = new Shape:
     override def get(w: Int, h: Int): Set[(Int, Int)] =
