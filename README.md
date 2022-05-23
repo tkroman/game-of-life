@@ -9,7 +9,7 @@ Dependencies:
 * [scala-js/scala-js-dom](https://github.com/scala-js/scala-js-dom) to manipulate DOM in the browser
 * [monix/monix](https://github.com/monix/monix) to abstract over JVM/JS execution models
 
-Most of the code in `shared` except for the actual platform-dependent renderers which are in `jvm`/`js` respectively.
+Most of the code is in `shared` except for the actual platform-dependent renderers which are in `jvm`/`js` respectively.
 
 I also did an [RLE](https://conwaylife.com/wiki/RLE) parser so both versions accept custom shape definitions.
 
