@@ -23,8 +23,7 @@ object ShapeReader:
       }
       .toSet
 
-    val pw = points.map(_._1).max
-    val ph = points.map(_._2).max
+    val (pw, ph) = points.reduce((x, y) => (x._1.max(y._1), x._2.max(y._2)))
     (w: Int, h: Int) => {
       val cx = (w - pw) / 2
       val cy = (h - ph) / 2

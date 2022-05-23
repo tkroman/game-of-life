@@ -7,36 +7,20 @@
         html, body, .container {
             height: 100%;
             width: 100%;
-        }
-        .cell {
-            border-radius: 1px;
-            flex-grow: 1;
-            aspect-ratio: 1;
-            border-color: darkseagreen;
-        }
-        .white {
-            background-color: lightskyblue;
-        }
-        .black {
-            background-color: yellow;
+            margin: 0;
+            overflow: hidden;
         }
         .container {
             display: flex;
             justify-content: center;
             align-items: center;
         }
-        .grid {
-            height: 100%;
-            aspect-ratio: 1;
-            display: grid;
-            font-size: 0;
-            background-color: lightblue;
-        }
     </style>
 </head>
 <body>
 <script type="text/javascript" src="./js/target/scala-3.1.2/life-fastopt/main.js"></script>
 <div id="container" class="container">
+    <canvas id="grid" class="grid"></canvas>
 </div>
 </body>
 </html>
